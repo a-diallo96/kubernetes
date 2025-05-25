@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-app
+  template:
+    metadata:
+      labels:
+        app: php-app
+    spec:
+      initContainers:
+        - name: init-uploads
+          image: gestion-produits-php:latest
+          imagePullPolicy: Never
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "[DEBUG] 📁 Contenu avant copie :"
+              ls -l /var/www/html/uploads || true
+              echo "[DEBUG] 📦 Copie vers volume partagé..."
+              cp -rv /var/www/html/uploads/* /uploads/ || true
+              echo "[DEBUG] ✅ Contenu final du volume :"
+              ls -l /uploads || true
+          volumeMounts:
+            - name: uploads-volume
+              mountPath: /uploads
+
+      containers:
+        - name: php-app
+          image: gestion-produits-php:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: uploads-volume
+              mountPath: /var/www/html/uploads
+          env:
+            - name: DB_HOST
+              value: mysql
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-database
+            - name: DB_USER
+              value: root
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-root-password
+
+      volumes:
+        - name: uploads-volume
+          persistentVolumeClaim:
+            claimName: php-uploads-pvc

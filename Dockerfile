@@ -8,5 +8,6 @@ COPY php/www/ /var/www/html/
 
 # Donne les droits au dossier uploads
 RUN chmod -R 777 /var/www/html/uploads
+RUN chown -R www-data:www-data /var/www/html/uploads
 
 
