@@ -1,19 +1,22 @@
-version: '3.8'
-
 services:
   web:
     build: .
     ports:
-      - "8080:80"
+      - "8080:80" # port 8080 c'est le port en local et le port 80 port du container 
     volumes:
-      - ./php/www:/var/www/html
+      - uploads_data:/var/www/html/uploads:ro # <= volume dédié aux images
     depends_on:
       - db
 
   db:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: gestion_produits
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     volumes:
+      - mysql_data:/var/lib/mysql
       - ./database/gestion_produits.sql:/docker-entrypoint-initdb.d/gestion_produits.sql
+
+volumes:
+  uploads_data:
+  mysql_data:
